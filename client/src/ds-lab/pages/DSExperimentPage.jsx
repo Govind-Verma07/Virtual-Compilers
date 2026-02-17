@@ -1,0 +1,151 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { dsExperiments } from '../data/dsExperiments';
+import DSCompiler from '../compiler/DSCompiler';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Book, ScrollText, PlayCircle, ChevronLeft, Target, Lightbulb, ClipboardList, CheckCircle2, Info } from 'lucide-react';
+import ExperimentSection from '../../components/ExperimentSection';
+
+const DSExperimentPage = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const experiment = dsExperiments.find(e => e.id === parseInt(id));
+
+    const [activeTab, setActiveTab] = useState('theory');
+
+    useEffect(() => {
+        if (!experiment) navigate('/ds-lab');
+    }, [experiment, navigate]);
+
+    const tabs = [
+        { id: 'theory', label: 'Theory', icon: <Book className="w-4 h-4" /> },
+        { id: 'procedure', label: 'Procedure', icon: <ScrollText className="w-4 h-4" /> },
+        { id: 'editor', label: 'Simulation', icon: <PlayCircle className="w-4 h-4" /> },
+    ];
+
+    if (!experiment) return null;
+
+    return (
+        <div className="flex flex-col h-full w-full overflow-hidden bg-[#020617]">
+            {/* Header */}
+            <div className="h-14 w-full shrink-0 border-b border-white/5 flex items-center justify-between px-4 sm:px-6 bg-[#0f172a] z-30">
+                <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
+                    <button
+                        onClick={() => navigate('/ds-lab')}
+                        className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-all shrink-0"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <div className="h-4 w-px bg-white/10 shrink-0" />
+                    <h2 className="font-bold text-slate-200 uppercase tracking-tight text-xs sm:text-sm truncate">
+                        DS Lab: Experiment {experiment.id} - {experiment.title}
+                    </h2>
+                </div>
+            </div>
+
+            <div className="flex-1 w-full flex flex-col sm:flex-row overflow-hidden relative">
+                {/* Tabs Sidebar */}
+                <div className="w-full sm:w-16 h-14 sm:h-full border-t sm:border-t-0 sm:border-r border-white/5 flex sm:flex-col items-center justify-around sm:justify-start py-0 sm:py-6 gap-0 sm:gap-6 bg-[#0f172a] z-20 order-last sm:order-first shrink-0">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`p-3 rounded-none sm:rounded-xl transition-all relative group flex-1 sm:flex-none flex items-center justify-center ${activeTab === tab.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'text-slate-500 hover:text-slate-300'}`}
+                            title={tab.label}
+                        >
+                            {tab.icon}
+                            <div className="hidden sm:block absolute left-16 bg-slate-800 text-white px-2 py-1 rounded text-[10px] invisible group-hover:visible whitespace-nowrap z-50">
+                                {tab.label}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 w-full relative overflow-hidden bg-[#020617] min-h-0">
+                    <AnimatePresence mode="wait">
+                        {activeTab === 'theory' && (
+                            <motion.div
+                                key="theory"
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                className="absolute inset-0 p-4 sm:p-10 overflow-auto scrollbar-hide w-full"
+                            >
+                                <div className="max-w-4xl mx-auto space-y-6">
+                                    <ExperimentSection title="Aim / Objective" icon={Target} color="purple">
+                                        <p className="text-lg text-slate-300">{experiment.objective}</p>
+                                    </ExperimentSection>
+
+                                    <ExperimentSection title="Theory" icon={Lightbulb} color="pink">
+                                        <p className="whitespace-pre-wrap text-slate-300 leading-relaxed">{experiment.theory}</p>
+                                    </ExperimentSection>
+
+                                    {experiment.algorithm && experiment.algorithm.length > 0 && (
+                                        <ExperimentSection title="Algorithm" icon={ClipboardList} color="amber">
+                                            <ol className="list-decimal ml-6 space-y-4">
+                                                {experiment.algorithm.map((step, i) => (
+                                                    <li key={i} className="pl-2 group/step">
+                                                        <span className="text-slate-300 group-hover:text-white transition-colors">{step}</span>
+                                                    </li>
+                                                ))}
+                                            </ol>
+                                        </ExperimentSection>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'procedure' && (
+                            <motion.div
+                                key="procedure"
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                className="absolute inset-0 p-4 sm:p-10 overflow-auto scrollbar-hide w-full"
+                            >
+                                <div className="max-w-4xl mx-auto space-y-6">
+                                    <ExperimentSection title="Procedure" icon={ScrollText} color="green">
+                                        <ul className="space-y-4">
+                                            {experiment.procedure.map((step, i) => (
+                                                <li key={i} className="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/5 shadow-sm">
+                                                    <div className="bg-green-500/20 text-green-400 w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold border border-green-500/20">
+                                                        {i + 1}
+                                                    </div>
+                                                    <span className="text-slate-300">{step}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </ExperimentSection>
+
+                                    <ExperimentSection title="Expected Result" icon={CheckCircle2} color="purple">
+                                        <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl text-purple-300 font-medium">
+                                            {experiment.result}
+                                        </div>
+                                    </ExperimentSection>
+
+                                    <ExperimentSection title="Conclusion" icon={Info} color="pink">
+                                        <p className="italic text-slate-400">
+                                            {experiment.conclusion}
+                                        </p>
+                                    </ExperimentSection>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'editor' && (
+                            <motion.div
+                                key="editor"
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                className="absolute inset-0 flex flex-col p-0 w-full h-full"
+                            >
+                                <DSCompiler
+                                    defaultCodeC={experiment.defaultCodeC}
+                                    defaultCodeCPP={experiment.defaultCodeCPP}
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default DSExperimentPage;
